@@ -1,18 +1,19 @@
 <template>
   <div>
-    <h1>Simple List Example</h1>
-    <div class="two-column-container">
-      <ul id="items" class="column">
-        <li v-for="(item, index) in items" :key="index" class="sortable-item">
-          {{ item }}
-        </li>
-      </ul>
+    <h1>Simple Grid Example</h1>
+    <div id="items" class="grid-container">
+      <div
+        v-for="(item, index) in items"
+        :key="item"
+        class="sortable-item"
+        :style="{ gridColumn: (index % 2) + 1 }"
+      >
+        {{ item }}
+      </div>
     </div>
     <!-- 선택 버튼 -->
     <button @click="toggleDropdown">변경</button>
     <div v-if="showDropdown">
-      <!-- <input type="checkbox" value="all" v-model="selectAll" id="all"/>
-        <label for="all">전체</label> -->
         <template v-for="item in allItems" :key="item">
           <input
             type="checkbox"
@@ -32,82 +33,78 @@
 
 <script>
 import Sortable from 'sortablejs';
-import { useSortableStore } from './store'; // Pinia 스토어 가져오기
+import { useSortableStore } from './store';                                 // Pinia 스토어 가져오기
 
 export default {
   data() {
     return {
       allItems: ['item 1', 'item 2', 'item 3', 'item 4'],
       selectedItems: [],
-      showDropdown: false,
+      showDropdown: false
     };
   },
   mounted() {
-    const store = useSortableStore(); // 스토어 인스턴스 생성
+    const store = useSortableStore();
     store.restoreSortedItems();
-    
+
     const sortableList = new Sortable(this.$el.querySelector('#items'), {
-      animation: 150, // 드래그 애니메이션 속도 (ms)
+      animation: 150,
+      group: 'shared',
+      sort: true,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      dragClass: 'sortable-drag',
+      grid: [2, 1], 
       onEnd: (evt) => {
         const newItems = evt.from.children;
-        // 아이템의 텍스트를 배열로 저장
         const sortedItems = Array.from(newItems).map((el) => el.textContent);
         store.setSortedItems(sortedItems);
         store.saveSortedItems();
-        this.updateSortableList(sortedItems);
-      },
+      }
     });
   },
   methods: {
     // 저장 버튼 클릭 시
     saveSorting() {
       const store = useSortableStore(); // Pinia 스토어 인스턴스 생성
-      const sortableList = this.$el.querySelector('#items');
-      const newItems = sortableList.children;
-      const sortedItems = Array.from(newItems).map((el) => el.textContent);
-      store.setSortedItems(sortedItems);
+      store.setSortedItems(this.items);
       store.saveSortedItems();
-      console.log('저장:', sortedItems);
-      // 저장 후 showDropdown 값을 false로 설정
-      this.showDropdown = false;
+      console.log('저장:', this.items);
+      this.showDropdown = false;         //드롭다운 닫기
+      this.selectedItems = [];           // selectedItems 비우기
     },
-    // 선택 버튼 클릭 시
+    // 변경 버튼 클릭 시
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
     },
     // 아이템 추가
     addSelectedItems() {
-      if (this.selectedItems.length > 0) {
-        const store = useSortableStore();
-        this.selectedItems.forEach(item => {
-          if (!store.sortedItems.includes(item)) {
-            store.sortedItems.push(item);
-          }
-        });
-        this.updateSortableList(store.sortedItems);
+  if (this.selectedItems.length > 0) {
+    const store = useSortableStore();
+    this.selectedItems.forEach((item) => {
+      if (!store.sortedItems.includes(item)) {
+        store.sortedItems.push(item);
+        console.log('추가', item);
       }
-    },
-    // 아이템 삭제
+    });
+
+    // 아이템을 추가한 후에 화면을 업데이트
+    this.updateSortableList();
+  }
+},
+    //아이템 삭제
     removeSelectedItems() {
       const store = useSortableStore();
-      this.selectedItems.forEach(item => {
+      this.selectedItems.forEach((item) => {
         const index = store.sortedItems.indexOf(item);
         if (index !== -1) {
           store.sortedItems.splice(index, 1);
         }
+        console.log('삭제', item);
       });
-      this.updateSortableList(store.sortedItems);
     },
-    // list 업데이트
-    updateSortableList(items) {
-      const sortableList = this.$el.querySelector('#items');
-      sortableList.innerHTML = '';        // 기존의 아이템들을 제거
-
-      items.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item;
-        sortableList.appendChild(li);     // 새로운 아이템을 추가
-      });
+    updateSortableList() {
+      this.selectedItems = [...this.selectedItems];
     },
   },
   computed: {
@@ -131,6 +128,20 @@ export default {
 </script>
 
 <style>
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); 
+  grid-gap: 10px;
+
+}
+
+.sortable-item {
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: #f8f8f8;
+  cursor: grab;
+}
+
 ul {
   list-style: none;
   padding: 0;
