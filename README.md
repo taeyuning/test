@@ -8,9 +8,8 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 
 
 npm create vite@latest .
--> vue
--> js
-npm i
-
-npm install sortablejs --save
-npm install pinia
+# -> vue
+# -> js
+# npm i
+# npm install sortablejs --save
+# npm install pinia
